@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!-- Max Shinn, October 2021, m.shinn@ucl.ac.uk -->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link href="./style.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" type="text/css" href="./beauter.min.css" />
+        <script src="./jquery-3.6.0.min.js"></script>
+        <script src="./jquery.flot.js"></script>
+        <script src="./jquery.flot.axislabels.js"></script>
+        <script src="./groups-%%%DSNAME%%%.json"></script>
+        <script>
+         function transpose(matrix) {
+             return matrix[0].map((col, i) => matrix.map(row => row[i]));
+         }
+         function vector_sum(v1, v2) {
+             res = [];
+             for (i=0; i<v1.length; i++) {
+                 res.push(v1[i]+v2[i]);
+             }
+             return res;
+         }
+         average = list => list.reduce((prev, curr) => prev + curr) / list.length;
+         function switchimage(i) {
+				     $("#phiimg").attr("src", "./phiviews/Selection_"+String(i).padStart(3, '0')+".png");
+             $(".ylabeldiv").removeClass("selectedylabellink");
+             $("#ylabel"+i).addClass("selectedylabellink");
+             $("#imgtitle").text("Cluster "+i);
+             plotobj.unhighlight()
+             plotobj.highlight(0,i)
+             plotobj.highlight(1,i)
+             plotobj.highlight(2,i)
+             return false;}
+         // On load
+         $(function() {
+             if ("%%%DSNAME%%%" == "miniDataset")
+                 $("#minilink").addClass("active");
+             else
+                 $("#megalink").addClass("active");
+             //csvdat = "";
+             //$.get({url: "./groups.csv", success: function (v) {csvdat = v;}, async: false});
+             //arr = $.csv.toArrays(csvdat);
+             arr = dat
+             //arr = [["", "User1", "User2", "User3"], ["Cell1", "good", "good", "mua"], ["Cell2", "mua", "good", "noise"], ["Cell3", "noise", "noise", "noise"], ["Cell4", "noise", "good", ""]];
+             users = arr[0].slice(1);
+             cells = transpose(arr)[0].slice(1);
+             datanolabs = transpose(transpose(arr.slice(1)).slice(1));
+             users_ind = [...users.keys()];
+             cells_ind = [...cells.keys()];
+             for (i=0; i<users.length; i++) {
+                 $("#userselect").append($("<option>").val(i).html(users[i]));
+             }
+             $("#numpeople").text(users.length)
+             // Update label colors when a new user is selected in the menu
+             $("#userselect").change(function () {
+                 user = $("#userselect").val()
+                 vals = transpose(datanolabs)[user];
+                 for (i=0; i<cells.length; i++) {
+                     if (typeof vals !== 'undefined')
+                         color = {good: "green", mua: "blue", noise: "red"}[vals[i]];
+                     else
+                         color = "black";
+
+                     label = $("#ylabel"+i);
+                     star = $("#starlabel"+i);
+                     labellink = $("#ylabel"+i+"link");
+                     console.debug("label", label);
+                     labellink.css({color: color});
+                     if (typeof vals === 'undefined') {
+                         //label.css({border: "0px"});
+                         label.attr("text-decoration", "normal");
+                         star.hide()
+                     } else if (vals[i] != consensus[i]) {
+                         //label.css({border: "2px solid black"});
+                         label.attr("font-weight", "bolder");
+                         label.attr("text-decoration", "underline");
+                         star.show()
+                     } else {
+                         //label.css({border: "0px"});
+                         label.attr("font-weight", "normal");
+                         label.attr("text-decoration", "none");
+                         star.hide()
+                     }
+                 }
+             });
+             $("#refreshbutton").click(function () {location.reload(true);});
+             good_counts = datanolabs.map(c => average(c.map(x => x=="good" ? 1 : 0)));
+             mua_counts = datanolabs.map(c => average(c.map(x => x=="mua" ? 1 : 0)));
+             noise_counts = datanolabs.map(c => average(c.map(x => x=="noise" ? 1 : 0)));
+             consensus = [];
+             for (i=0; i<good_counts.length; i++) {
+                 if (good_counts[i] >= mua_counts[i] && good_counts[i] >= noise_counts[i])
+                     consensus.push("good");
+                 else if (mua_counts[i] >= good_counts[i] && mua_counts[i] >= noise_counts[i])
+                     consensus.push("mua");
+                 else
+                     consensus.push("noise");
+             }
+
+             good_matrix = transpose([good_counts, cells_ind]);
+             mua_matrix = transpose([vector_sum(mua_counts, good_counts), cells_ind, good_counts]);
+             noise_matrix = transpose([vector_sum(vector_sum(noise_counts,mua_counts),good_counts),
+                                       cells_ind, vector_sum(good_counts,mua_counts)]);
+
+             plotobj = $.plot("#plot", [{color: "green", data: good_matrix, label: "good"},
+                                        {color: "blue", data: mua_matrix, label: "mua"},
+                                        {color: "red", data: noise_matrix, label: "noise"}], {
+			           series: {
+                     //lines: {show: false},
+				             bars: {
+					               show: true,
+					               barWidth: 0.6,
+					               align: "center",
+                         horizontal: true
+				             }
+			           },
+                 grid: {
+                     clickable: true,
+                 },
+                 legend: {
+                     show: true,
+                     container: document.getElementById("legend"),
+                     position: "nw",
+                     backgroundOpacity: 1,
+                     noColumns: 4
+                 },
+                 xaxis: {
+                     min: 0,
+                     max: 1,
+                     axisLabel: " ",
+                     position: "top",
+                 },
+                 yaxis: {
+                     ticks: cells_ind,
+                     tickFormatter: (n => "        "),
+                     min: -1,
+                     max: cells.length,
+                     inverted: true,
+                 },
+		         });
+             for (i=0; i<cells.length; i++) {
+                 pos = plotobj.pointOffset({x: -.02, y:i});
+                 $("<div style='height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='ylabeldiv' id='ylabel"+i+"'><a class='clusterlabel' style='color:black;' href='' onclick='return switchimage("+i+")' id='ylabel"+i+"link'>Cluster "+i+"</a></div>").appendTo("#plot").css({position: "absolute", left: pos['left']-80, top: pos['top']-8})
+                 $("<div style='font-size:20px;height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='starlabeldiv' hidden id='starlabel"+i+"'>*</div>").appendTo("#plot").css({position: "absolute", left: pos['left']-147, top: pos['top']-5})
+                 /* label = $(".tickLabel").filter(function () {return $(this).text() == "Cluster "+cells[i];});
+                  * label.attr("class", label.attr("class")+" ylabel"+i)
+                  * label.click(function() {alert('hello');}); */
+             }
+             titlepos = plotobj.pointOffset({x: .5, y:0});
+             $("<div style='width:300px;margin-left:-150px;text-align:center'>Fraction of people selecting each choice</div>").appendTo("#plot").css({position: "absolute", left:titlepos["left"], top:titlepos["top"]-80})
+             $("#plot").bind("plotclick", function (event, pos, item) {
+			           if (item) {
+                     cluster = item.datapoint[1];
+                     switchimage(cluster);
+			           }
+		         });
+
+         });
+        </script>
+    </head>
+    <body>
+        <!-- Hey you, what are you doing viewing the HTML source?  You're such a nerd. -->
+        <ul class="topnav">
+            <li><a class="brand">Spike sorting viewer</a></li>
+            <li><a id="minilink" href="index.html">miniDataset (mandatory)</a></li>
+            <li><a id="megalink" href="big_dataset.html">Large dataset (optional)</a></li>
+            <li style="float:right"><a>Currently <span class="count _danger" id="numpeople">0</span> submitted spike sorting rounds <button class="_info _tiny" style="margin-left: 20px;margin-bottom:0px;padding:5px" id="refreshbutton">Refresh</button></a></li>
+        </ul>
+        
+        <p style="width:700px;padding:15px">
+            Of all the people who submitted spike sortings for the 2021
+            Neuropixels course, their choices are aggregated below as stacked
+            horizontal bar plots.  To see how your results compare, select your
+            chosen user ID below from the drop down box.  Your responses will be
+            indicated by the color of the labels.  Asterisks indicate any
+            choices where your choice deviated from the group consensus.</p>
+            </div>
+        </div>
+        <div class="note">Select your ID to view your choices (as label colors) compared to others:
+            <select id="userselect"><option value="">---</option></select>
+        </div>
+        <div id="legend" style="margin-bottom: 20px"></div>
+        <div id="plotarea" style="width:1150px;margin-left:10px">
+        <div id="plotcontainer" style="width:630px;height:560px;overflow:auto;float:left;border:2px solid lightgray">
+            <div id="plot" style="width:500px;height:4096px;margin-left:85px;margin-top:50px"></div>
+        </div>
+        <div id="imgtitle" style="font-size:30px;margin-left:850px;">&nbsp;</div>
+        <img id="phiimg" src="./phiviews/Selection_none.png" style="float:right; width:500px" />
+        </div>
+
+
+       <div class="row">
+          <div class="col m6 _alignRight">
+              <br>
+              Neuropixels course, 2021
+          </div>
+       </div>
+    </body>
+</html>
+
