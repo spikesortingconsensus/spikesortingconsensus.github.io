@@ -9,7 +9,23 @@
         <script src="./jquery.flot.js"></script>
         <script src="./jquery.flot.axislabels.js"></script>
         <script src="./groups-miniDataset.json"></script>
+        <script src="./splitsmerges-miniDataset.json"></script>
         <script>
+        function setCookie(key, value, expiry) {
+            var expires = new Date();
+            expires.setTime(expires.getTime() + (expiry * 24 * 60 * 60 * 1000));
+            document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
+        }
+    
+        function getCookie(key) {
+            var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+            return keyValue ? keyValue[2] : null;
+        }
+    
+        function eraseCookie(key) {
+            var keyValue = getCookie(key);
+            setCookie(key, keyValue, '-1');
+        }
          function transpose(matrix) {
              return matrix[0].map((col, i) => matrix.map(row => row[i]));
          }
@@ -20,6 +36,7 @@
              }
              return res;
          }
+         flatten = (arr) => arr.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
          average = list => list.reduce((prev, curr) => prev + curr) / list.length;
          function switchimage(i) {
 				     $("#phiimg").attr("src", "./phiviews/Selection_"+String(i).padStart(3, '0')+".png");
@@ -31,6 +48,18 @@
              plotobj.highlight(1,i)
              plotobj.highlight(2,i)
              return false;}
+         function hideforgood() {
+            $("#dontlookwarning").hide();
+            $("#everythingelse").show();
+            setCookie("dontlook-miniDataset", 1, 90);
+            }
+         function downloadfile() {
+             biglink = "https://drive.google.com/file/d/1Lck13q2HU09s3tsRIrK9Z-UMp3daKwFV/view?usp=sharing";
+             smalllink = "http://data.cortexlab.net/singlePhase3/data/miniDataset.zip";
+             dllink = ("miniDataset" == "miniDataset") ? smalllink : biglink;
+             window.location.href = dllink;
+         }
+
          // On load
          $(function() {
              if ("miniDataset" == "miniDataset")
@@ -51,6 +80,10 @@
                  $("#userselect").append($("<option>").val(i).html(users[i]));
              }
              $("#numpeople").text(users.length)
+             if (!getCookie("dontlook-miniDataset")) {
+                 $("#dontlookwarning").show();
+                 $("#everythingelse").hide();
+             }
              // Update label colors when a new user is selected in the menu
              $("#userselect").change(function () {
                  user = $("#userselect").val()
@@ -82,6 +115,15 @@
                          star.hide()
                      }
                  }
+                 merges = dat_merges[user];
+                 splits = dat_splits[user];
+                 $(".iusesplitclass").html("")
+                 $(".iusemergeclass").html("")
+                 for (i=0; i<merges.length; i++)
+                     $("#iusemerge"+merges[i].join("_")).html("&rarr;")
+                 for (i=0; i<splits.length; i++)
+                     $("#iusesplit"+splits[i]).html("&rarr;")
+
              });
              $("#refreshbutton").click(function () {location.reload(true);});
              good_counts = datanolabs.map(c => average(c.map(x => x=="good" ? 1 : 0)));
@@ -154,19 +196,56 @@
                      switchimage(cluster);
 			           }
 		         });
+             merges_texts = [];
+             for (i=0; i<dat_merges.length; i++) {
+                 _merges_text = [];
+                 for (j=0; j<dat_merges[i].length; j++)
+                     _merges_text.push(dat_merges[i][j][0]+"_"+dat_merges[i][j][1]);
+                 merges_texts.push(_merges_text);
+             }
+             full_merges = flatten(merges_texts);
+             full_splits = flatten(dat_splits);
+             merges_counts = new Map();
+             for (i=0; i<full_merges.length; i++)
+                 if (merges_counts.has(full_merges[i]))
+                     merges_counts.set(full_merges[i], merges_counts.get(full_merges[i])+1);
+                 else
+                     merges_counts.set(full_merges[i], 1);
+             splits_counts = new Map();
+             for (i=0; i<full_splits.length; i++)
+                 if (splits_counts.has(full_splits[i]))
+                     splits_counts.set(full_splits[i], splits_counts.get(full_splits[i])+1);
+             else
+                 splits_counts.set(full_splits[i], 1);
+             sorted_splits = [...splits_counts.entries()].sort((a,b) => b[1] - a[1]);
+             sorted_merges = [...merges_counts.entries()].sort((a,b) => b[1] - a[1]);
+             splitstablecontent = [...sorted_splits.map(row => "<tr><td class='iusesplitclass' id='iusesplit"+row[0]+"'></td> <td>Cluster "+row[0]+"</td><td>"+row[1]+"</td></tr>")].join("\n");
+             mergestablecontent = [...sorted_merges.map(row => "<tr><td class='iusemergeclass' id='iusemerge"+row[0]+"'></td> <td>Clusters "+row[0].split("_")[0]+" and "+row[0].split("_")[1]+"</td><td>"+row[1]+"</td></tr>")].join("\n");
+            $("#splitscontainer").html("<div style=\"font-size:30px\">Splits</div><table class='_width100'><thead><tr><td width=\"40px\"></td><td>Cluster</td><td>Count</td></tr></thead>\n<tbody>"+splitstablecontent+"\n</tbody></table>");
+            $("#mergescontainer").html("<div style=\"font-size:30px\">Merges</div><table class='_width100'><thead><tr><td></td><td>Cluster</td><td>Count</td></tr></thead>\n<tbody>"+mergestablecontent+"\n</tbody></table>");
+
 
          });
         </script>
+        <title>Spike sorting consensus viewer</title>
     </head>
     <body>
         <!-- Hey you, what are you doing viewing the HTML source?  You're such a nerd. -->
         <ul class="topnav">
             <li><a class="brand">Spike sorting viewer</a></li>
-            <li><a id="minilink" href="index.html">miniDataset (mandatory)</a></li>
-            <li><a id="megalink" href="big_dataset.html">Large dataset (optional)</a></li>
-            <li style="float:right"><a>Currently <span class="count _danger" id="numpeople">0</span> submitted spike sorting rounds <button class="_info _tiny" style="margin-left: 20px;margin-bottom:0px;padding:5px" id="refreshbutton">Refresh</button></a></li>
+            <li><a id="minilink" href="index.html">miniDataset</a></li>
+            <li><a id="megalink" href="emouse_dataset.html">eMouse dataset (optional)</a></li>
+            <li><a href="https://yalesurvey.ca1.qualtrics.com/jfe/form/SV_3zb1nyTGHVNgdYG">Submit</a></li>
+            <li style="float:right"><a>Currently <span class="count _danger" id="numpeople">0</span> submissions <button class="_info _tiny" style="margin-left: 20px;margin-bottom:0px;padding:5px" id="refreshbutton">Refresh</button></a></li>
         </ul>
-        
+
+        <div id="dontlookwarning" class="jumbo _danger" style="transition:2s" hidden>
+          <h3>Do not look at these results until you have performed spike sorting on the dataset</h3>
+          <button class="-close _yellow" onclick="downloadfile()">Download dataset</button>
+          <br />
+          <button class="-close _yellow" onclick="hideforgood()">Show spike sorting results</button>
+        </div>
+        <div id="everythingelse">
         <p style="width:700px;padding:15px">
             Of all the people who submitted spike sortings for the 2021
             Neuropixels course, their choices are aggregated below as stacked
@@ -174,9 +253,8 @@
             chosen user ID below from the drop down box.  Your responses will be
             indicated by the color of the labels.  Asterisks indicate any
             choices where your choice deviated from the group consensus.</p>
-            </div>
-        </div>
-        <div class="note">Select your ID to view your choices (as label colors) compared to others:
+
+        <div class="note" style="width:700px">Select your ID to view your choices (as label colors) compared to others:
             <select id="userselect"><option value="">---</option></select>
         </div>
         <div id="legend" style="margin-bottom: 20px"></div>
@@ -188,6 +266,13 @@
         <img id="phiimg" src="./phiviews/Selection_none.png" style="float:right; width:500px" />
         </div>
 
+        <div id="tablecontainer" style="margin: 30px">
+            <div id="splitscontainer" style="width:400px;margin: 30px; float: left">
+            </div>
+            <div id="mergescontainer" style="width:400px;margin: 30px; float: left">
+            </div>
+
+        </div>
 
        <div class="row">
           <div class="col m6 _alignRight">
@@ -195,6 +280,7 @@
               Neuropixels course, 2021
           </div>
        </div>
+        </div>
     </body>
 </html>
 

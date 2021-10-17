@@ -3,8 +3,8 @@
 # replace the string %%%DSNAME%%% with the dataset name, and save it to the
 # appropriate HTML file.
 
-datasets = ["miniDataset", "megaDataset"]
-dataset_filenames = ["index.html", "big_dataset.html"]
+datasets = ["miniDataset", "eMouse"]
+dataset_filenames = ["index.html", "emouse_dataset.html"]
 with open("template.txt", "r") as f:
     text = f.read()
 
