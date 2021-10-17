@@ -14,7 +14,7 @@
         function setCookie(key, value, expiry) {
             var expires = new Date();
             expires.setTime(expires.getTime() + (expiry * 24 * 60 * 60 * 1000));
-            document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
+            document.cookie = key + '=' + value + ';SameSite=Strict';
         }
     
         function getCookie(key) {
@@ -52,6 +52,7 @@
             $("#dontlookwarning").hide();
             $("#everythingelse").show();
             setCookie("dontlook-%%%DSNAME%%%", 1, 90);
+            location.reload(true);
             }
          function downloadfile() {
              biglink = "https://drive.google.com/file/d/1Lck13q2HU09s3tsRIrK9Z-UMp3daKwFV/view?usp=sharing";
@@ -189,7 +190,7 @@
                   * label.click(function() {alert('hello');}); */
              }
              titlepos = plotobj.pointOffset({x: .5, y:0});
-             $("<div style='width:300px;margin-left:-150px;text-align:center'>Fraction of people selecting each choice</div>").appendTo("#plot").css({position: "absolute", left:titlepos["left"], top:titlepos["top"]-80})
+             $("<div style='width:300px;margin-left:-150px;text-align:center'>Fraction of people selecting each choice</div>").appendTo("#plot").css({position: "absolute", left:titlepos["left"], top:-35})
              $("#plot").bind("plotclick", function (event, pos, item) {
 			           if (item) {
                      cluster = item.datapoint[1];
