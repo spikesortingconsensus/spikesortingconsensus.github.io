@@ -14,10 +14,10 @@ fileszip = sys.argv[2]
 
 names = {"miniDataset": "miniDataset", "eMouse": "eMouse"}
 
-ignore_ids = ['random test', 'max test']
+ignore_ids = ['random test', 'max test', 'dummy', 'splitmergetest']
 
-csvzip = "/home/max/Downloads/Submit+manual+spike+sorting_October+16,+2021_07.34.zip"
-fileszip = "/home/max/Downloads/Submit+manual+spike+sorting_October+16,+2021_07.34(1).zip"
+#csvzip = "/home/max/Downloads/Submit+manual+spike+sorting_October+16,+2021_07.34.zip"
+#fileszip = "/home/max/Downloads/Submit+manual+spike+sorting_October+16,+2021_07.34(1).zip"
 
 # csvzip = "/home/max/Downloads/Submit+manual+spike+sorting_October+14,+2021_09.29.zip"
 # fileszip = "/home/max/Downloads/Submit+manual+spike+sorting_October+14,+2021_09.29(2).zip"
@@ -45,6 +45,7 @@ with tempfile.TemporaryDirectory() as d:
     anonymous_ids = {"miniDataset": [], "eMouse": []}
     for i,r in df.iterrows():
         aid = r['Q1']
+        print(aid)
         if aid in ignore_ids: continue
         cluster_group_files[r['Q2']].append(glob.glob(d+"/Q3/"+r["ResponseId"]+"*.tsv")[0])
         spike_clusters_files[r['Q2']].append(glob.glob(d+"/Q4/"+r["ResponseId"]+"*.npy")[0])
