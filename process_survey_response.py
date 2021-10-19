@@ -92,7 +92,7 @@ for k in _spikeclusters.keys():
         userinds = list(sorted(set(sc)))
         for i in userinds:
             oldlabels = set(_referenceclusters[k][sc==i])
-            if len(oldlabels) > 1:
+            if len(oldlabels) > 1 and list(sorted(oldlabels)) not in merges[-1]:
                 merges[-1].append(list(sorted(oldlabels)))
 
     fulljson = "dat_splits = "+str(splits) + ";\ndat_merges = "+str(merges)+";"
