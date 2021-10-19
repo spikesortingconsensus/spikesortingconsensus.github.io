@@ -100,7 +100,7 @@
                      labellink = $("#ylabel"+i+"link");
                      console.debug("label", label);
                      labellink.css({color: color});
-                     if (typeof vals[i] === 'undefined') {
+                     if (typeof vals[i] === 'undefined' || vals[i] == "") {
                          //label.css({border: "0px"});
                          label.attr("text-decoration", "normal");
                          star.hide()
