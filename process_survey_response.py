@@ -14,7 +14,7 @@ fileszip = sys.argv[2]
 
 names = {"miniDataset": "miniDataset", "eMouse": "eMouse"}
 
-ignore_ids = ['random test']
+ignore_ids = ['random test', 'max test']
 
 csvzip = "/home/max/Downloads/Submit+manual+spike+sorting_October+16,+2021_07.34.zip"
 fileszip = "/home/max/Downloads/Submit+manual+spike+sorting_October+16,+2021_07.34(1).zip"

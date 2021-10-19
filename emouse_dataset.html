@@ -39,7 +39,7 @@
          flatten = (arr) => arr.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
          average = list => list.reduce((prev, curr) => prev + curr) / list.length;
          function switchimage(i) {
-				     $("#phiimg").attr("src", "./phiviews/Selection_"+String(i).padStart(3, '0')+".png");
+				     $("#phiimg").attr("src", "./phiviews/eMouse_"+String(i).padStart(3, '0')+".png");
              $(".ylabeldiv").removeClass("selectedylabellink");
              $("#ylabel"+i).addClass("selectedylabellink");
              $("#imgtitle").text("Cluster "+i);
