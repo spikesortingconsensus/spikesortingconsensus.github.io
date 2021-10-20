@@ -39,10 +39,10 @@
          flatten = (arr) => arr.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
          average = list => list.reduce((prev, curr) => prev + curr) / list.length;
          function switchimage(i) {
-				     $("#phiimg").attr("src", "./phiviews/eMouse_"+String(i).padStart(3, '0')+".png");
+				     $("#phiimg").attr("src", "./phiviews/eMouse_"+String(cells[i]).padStart(3, '0')+".png");
              $(".ylabeldiv").removeClass("selectedylabellink");
-             $("#ylabel"+i).addClass("selectedylabellink");
-             $("#imgtitle").text("Cluster "+i);
+             $("#ylabel"+cells[i]).addClass("selectedylabellink");
+             $("#imgtitle").text("Cluster "+cells[i]);
              plotobj.unhighlight()
              plotobj.highlight(0,i)
              plotobj.highlight(1,i)
@@ -95,9 +95,9 @@
                      else
                          color = "black";
 
-                     label = $("#ylabel"+i);
-                     star = $("#starlabel"+i);
-                     labellink = $("#ylabel"+i+"link");
+                     label = $("#ylabel"+cells[i]);
+                     star = $("#starlabel"+cells[i]);
+                     labellink = $("#ylabel"+cells[i]+"link");
                      console.debug("label", label);
                      labellink.css({color: color});
                      if (typeof vals[i] === 'undefined' || vals[i] == "") {
@@ -183,10 +183,10 @@
 		         });
              for (i=0; i<cells.length; i++) {
                  pos = plotobj.pointOffset({x: -.02, y:i});
-                 $("<div style='height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='ylabeldiv' id='ylabel"+i+"'><a class='clusterlabel' style='color:black;' href='' onclick='return switchimage("+i+")' id='ylabel"+i+"link'>Cluster "+i+"</a></div>").appendTo("#plot").css({position: "absolute", left: pos['left']-80, top: pos['top']-8})
-                 $("<div style='font-size:20px;height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='starlabeldiv' hidden id='starlabel"+i+"'>*</div>").appendTo("#plot").css({position: "absolute", left: pos['left']-147, top: pos['top']-5})
+                 $("<div style='height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='ylabeldiv' id='ylabel"+cells[i]+"'><a class='clusterlabel' style='color:black;' href='' onclick='return switchimage("+i+")' id='ylabel"+cells[i]+"link'>Cluster "+cells[i]+"</a></div>").appendTo("#plot").css({position: "absolute", left: pos['left']-80, top: pos['top']-8})
+                 $("<div style='font-size:20px;height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='starlabeldiv' hidden id='starlabel"+cells[i]+"'>*</div>").appendTo("#plot").css({position: "absolute", left: pos['left']-147, top: pos['top']-5})
                  /* label = $(".tickLabel").filter(function () {return $(this).text() == "Cluster "+cells[i];});
-                  * label.attr("class", label.attr("class")+" ylabel"+i)
+                  * label.attr("class", label.attr("class")+" ylabel"+cells[i])
                   * label.click(function() {alert('hello');}); */
              }
              titlepos = plotobj.pointOffset({x: .5, y:0});
