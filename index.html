@@ -3,285 +3,29 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <link href="./style.css" rel="stylesheet" type="text/css">
         <link rel="stylesheet" type="text/css" href="./beauter.min.css" />
-        <script src="./jquery-3.6.0.min.js"></script>
-        <script src="./jquery.flot.js"></script>
-        <script src="./jquery.flot.axislabels.js"></script>
-        <script src="./groups-miniDataset.json"></script>
-        <script src="./splitsmerges-miniDataset.json"></script>
-        <script>
-        function setCookie(key, value, expiry) {
-            var expires = new Date();
-            expires.setTime(expires.getTime() + (expiry * 24 * 60 * 60 * 1000));
-            document.cookie = key + '=' + value + ';SameSite=Strict';
-        }
-    
-        function getCookie(key) {
-            var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
-            return keyValue ? keyValue[2] : null;
-        }
-    
-        function eraseCookie(key) {
-            var keyValue = getCookie(key);
-            setCookie(key, keyValue, '-1');
-        }
-         function transpose(matrix) {
-             return matrix[0].map((col, i) => matrix.map(row => row[i]));
-         }
-         function vector_sum(v1, v2) {
-             res = [];
-             for (i=0; i<v1.length; i++) {
-                 res.push(v1[i]+v2[i]);
-             }
-             return res;
-         }
-         flatten = (arr) => arr.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
-         average = list => list.reduce((prev, curr) => prev + curr) / list.length;
-         function switchimage(i) {
-				     $("#phiimg").attr("src", "./phiviews/miniDataset_"+String(cells[i]).padStart(3, '0')+".png");
-             $(".ylabeldiv").removeClass("selectedylabellink");
-             $("#ylabel"+cells[i]).addClass("selectedylabellink");
-             $("#imgtitle").text("Cluster "+cells[i]);
-             plotobj.unhighlight()
-             plotobj.highlight(0,i)
-             plotobj.highlight(1,i)
-             plotobj.highlight(2,i)
-             return false;}
-         function hideforgood() {
-            $("#dontlookwarning").hide();
-            $("#everythingelse").show();
-            setCookie("dontlook-miniDataset", 1, 90);
-            location.reload(true);
-            }
-         function downloadfile() {
-             biglink = "https://drive.google.com/file/d/1Lck13q2HU09s3tsRIrK9Z-UMp3daKwFV/view?usp=sharing";
-             smalllink = "http://data.cortexlab.net/singlePhase3/data/miniDataset.zip";
-             dllink = ("miniDataset" == "miniDataset") ? smalllink : biglink;
-             window.location.href = dllink;
-         }
-
-         // On load
-         $(function() {
-             if ("miniDataset" == "miniDataset")
-                 $("#minilink").addClass("active");
-             else
-                 $("#megalink").addClass("active");
-             //csvdat = "";
-             //$.get({url: "./groups.csv", success: function (v) {csvdat = v;}, async: false});
-             //arr = $.csv.toArrays(csvdat);
-             arr = dat
-             //arr = [["", "User1", "User2", "User3"], ["Cell1", "good", "good", "mua"], ["Cell2", "mua", "good", "noise"], ["Cell3", "noise", "noise", "noise"], ["Cell4", "noise", "good", ""]];
-             users = arr[0].slice(1);
-             cells = transpose(arr)[0].slice(1);
-             datanolabs = transpose(transpose(arr.slice(1)).slice(1));
-             users_ind = [...users.keys()];
-             cells_ind = [...cells.keys()];
-             for (i=0; i<users.length; i++) {
-                 $("#userselect").append($("<option>").val(i).html(users[i]));
-             }
-             $("#numpeople").text(users.length)
-             if (!getCookie("dontlook-miniDataset")) {
-                 $("#dontlookwarning").show();
-                 $("#everythingelse").hide();
-             }
-             // Update label colors when a new user is selected in the menu
-             $("#userselect").change(function () {
-                 user = $("#userselect").val()
-                 vals = transpose(datanolabs)[user];
-                 for (i=0; i<cells.length; i++) {
-                     if (typeof vals !== 'undefined')
-                         color = {good: "green", mua: "blue", noise: "red"}[vals[i]];
-                     else
-                         color = "black";
-
-                     label = $("#ylabel"+cells[i]);
-                     star = $("#starlabel"+cells[i]);
-                     labellink = $("#ylabel"+cells[i]+"link");
-                     console.debug("label", label);
-                     labellink.css({color: color});
-                     if (typeof vals[i] === 'undefined' || vals[i] == "") {
-                         //label.css({border: "0px"});
-                         label.attr("text-decoration", "normal");
-                         star.hide()
-                     } else if (vals[i] != consensus[i]) {
-                         //label.css({border: "2px solid black"});
-                         label.attr("font-weight", "bolder");
-                         label.attr("text-decoration", "underline");
-                         star.show()
-                     } else {
-                         //label.css({border: "0px"});
-                         label.attr("font-weight", "normal");
-                         label.attr("text-decoration", "none");
-                         star.hide()
-                     }
-                 }
-                 merges = dat_merges[user];
-                 splits = dat_splits[user];
-                 $(".iusesplitclass").html("")
-                 $(".iusemergeclass").html("")
-                 for (i=0; i<merges.length; i++)
-                     $("#iusemerge"+merges[i].join("_")).html("&rarr;")
-                 for (i=0; i<splits.length; i++)
-                     $("#iusesplit"+splits[i]).html("&rarr;")
-
-             });
-             $("#refreshbutton").click(function () {location.reload(true);});
-             good_counts = datanolabs.map(c => average(c.map(x => x=="good" ? 1 : 0)));
-             mua_counts = datanolabs.map(c => average(c.map(x => x=="mua" ? 1 : 0)));
-             noise_counts = datanolabs.map(c => average(c.map(x => x=="noise" ? 1 : 0)));
-             consensus = [];
-             for (i=0; i<good_counts.length; i++) {
-                 if (good_counts[i] >= mua_counts[i] && good_counts[i] >= noise_counts[i])
-                     consensus.push("good");
-                 else if (mua_counts[i] >= good_counts[i] && mua_counts[i] >= noise_counts[i])
-                     consensus.push("mua");
-                 else
-                     consensus.push("noise");
-             }
-
-             good_matrix = transpose([good_counts, cells_ind]);
-             mua_matrix = transpose([vector_sum(mua_counts, good_counts), cells_ind, good_counts]);
-             noise_matrix = transpose([vector_sum(vector_sum(noise_counts,mua_counts),good_counts),
-                                       cells_ind, vector_sum(good_counts,mua_counts)]);
-
-             plotobj = $.plot("#plot", [{color: "green", data: good_matrix, label: "good"},
-                                        {color: "blue", data: mua_matrix, label: "mua"},
-                                        {color: "red", data: noise_matrix, label: "noise"}], {
-			           series: {
-                     //lines: {show: false},
-				             bars: {
-					               show: true,
-					               barWidth: 0.6,
-					               align: "center",
-                         horizontal: true
-				             }
-			           },
-                 grid: {
-                     clickable: true,
-                 },
-                 legend: {
-                     show: true,
-                     container: document.getElementById("legend"),
-                     position: "nw",
-                     backgroundOpacity: 1,
-                     noColumns: 4
-                 },
-                 xaxis: {
-                     min: 0,
-                     max: 1,
-                     axisLabel: " ",
-                     position: "top",
-                 },
-                 yaxis: {
-                     ticks: cells_ind,
-                     tickFormatter: (n => "        "),
-                     min: -1,
-                     max: cells.length,
-                     inverted: true,
-                 },
-		         });
-             for (i=0; i<cells.length; i++) {
-                 pos = plotobj.pointOffset({x: -.02, y:i});
-                 $("<div style='height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='ylabeldiv' id='ylabel"+cells[i]+"'><a class='clusterlabel' style='color:black;' href='' onclick='return switchimage("+i+")' id='ylabel"+cells[i]+"link'>Cluster "+cells[i]+"</a></div>").appendTo("#plot").css({position: "absolute", left: pos['left']-80, top: pos['top']-8})
-                 $("<div style='font-size:20px;height:12px;line-height:12px;width:79px;text-align:right;vertical-align:middle' class='starlabeldiv' hidden id='starlabel"+cells[i]+"'>*</div>").appendTo("#plot").css({position: "absolute", left: pos['left']-147, top: pos['top']-5})
-                 /* label = $(".tickLabel").filter(function () {return $(this).text() == "Cluster "+cells[i];});
-                  * label.attr("class", label.attr("class")+" ylabel"+cells[i])
-                  * label.click(function() {alert('hello');}); */
-             }
-             titlepos = plotobj.pointOffset({x: .5, y:0});
-             $("<div style='width:300px;margin-left:-150px;text-align:center'>Fraction of people selecting each choice</div>").appendTo("#plot").css({position: "absolute", left:titlepos["left"], top:-35})
-             $("#plot").bind("plotclick", function (event, pos, item) {
-			           if (item) {
-                     cluster = item.datapoint[1];
-                     switchimage(cluster);
-			           }
-		         });
-             merges_texts = [];
-             for (i=0; i<dat_merges.length; i++) {
-                 _merges_text = [];
-                 for (j=0; j<dat_merges[i].length; j++)
-                     _merges_text.push(dat_merges[i][j].join("_"));
-                 merges_texts.push(_merges_text);
-             }
-             full_merges = flatten(merges_texts);
-             full_splits = flatten(dat_splits);
-             merges_counts = new Map();
-             for (i=0; i<full_merges.length; i++)
-                 if (merges_counts.has(full_merges[i]))
-                     merges_counts.set(full_merges[i], merges_counts.get(full_merges[i])+1);
-                 else
-                     merges_counts.set(full_merges[i], 1);
-             splits_counts = new Map();
-             for (i=0; i<full_splits.length; i++)
-                 if (splits_counts.has(full_splits[i]))
-                     splits_counts.set(full_splits[i], splits_counts.get(full_splits[i])+1);
-             else
-                 splits_counts.set(full_splits[i], 1);
-             sorted_splits = [...splits_counts.entries()].sort((a,b) => b[1] - a[1]);
-             sorted_merges = [...merges_counts.entries()].sort((a,b) => (b[1] - a[1])*10000+(a[0].split("_")[0]-b[0].split("_")[0]));
-             splitstablecontent = [...sorted_splits.map(row => "<tr><td class='iusesplitclass' id='iusesplit"+row[0]+"'></td> <td>Cluster "+row[0]+"</td><td>"+row[1]+"</td></tr>")].join("\n");
-             mergestablecontent = [...sorted_merges.map(row => "<tr><td class='iusemergeclass' id='iusemerge"+row[0]+"'></td> <td>Clusters "+row[0].split("_").join(" + ")+"</td><td>"+row[1]+"</td></tr>")].join("\n");
-            $("#splitscontainer").html("<div style=\"font-size:30px\">Splits</div><table class='_width100'><thead><tr><td width=\"40px\"></td><td>Cluster</td><td>Count</td></tr></thead>\n<tbody>"+splitstablecontent+"\n</tbody></table>");
-            $("#mergescontainer").html("<div style=\"font-size:30px\">Merges</div><table class='_width100'><thead><tr><td></td><td>Cluster</td><td>Count</td></tr></thead>\n<tbody>"+mergestablecontent+"\n</tbody></table>");
-
-
-         });
-        </script>
-        <title>Spike sorting consensus viewer</title>
+        <title>Spike sorting consensus</title>
     </head>
     <body>
-        <!-- Hey you, what are you doing viewing the HTML source?  You're such a nerd. -->
         <ul class="topnav">
-            <li><a class="brand">Spike sorting viewer</a></li>
-            <li><a id="minilink" href="index.html">miniDataset</a></li>
-            <li><a id="megalink" href="emouse_dataset.html">eMouse dataset (optional)</a></li>
-            <li><a href="https://yalesurvey.ca1.qualtrics.com/jfe/form/SV_3zb1nyTGHVNgdYG">Submit</a></li>
-            <li style="float:right"><a>Currently <span class="count _danger" id="numpeople">0</span> submissions <button class="_info _tiny" style="margin-left: 20px;margin-bottom:0px;padding:5px" id="refreshbutton">Refresh</button></a></li>
+            <li><a class="brand">Spike sorting consensus</a></li>
+            <li><a id="homelink" href="/index.html">Home</a></li>
         </ul>
 
-        <div id="dontlookwarning" class="jumbo _danger" style="transition:2s" hidden>
-          <h3>Do not look at these results until you have performed spike sorting on the dataset</h3>
-          <button class="-close _yellow" onclick="downloadfile()">Download dataset</button>
-          <br />
-          <button class="-close _yellow" onclick="hideforgood()">Show spike sorting results</button>
-        </div>
-        <div id="everythingelse">
         <p style="width:700px;padding:15px">
-            Of all the people who submitted spike sortings for the 2021
-            Neuropixels course, their choices are aggregated below as stacked
-            horizontal bar plots.  To see how your results compare, select your
-            chosen user ID below from the drop down box.  Your responses will be
-            indicated by the color of the labels.  Asterisks indicate any
-            choices where your choice deviated from the group consensus.</p>
+            Collections of multiple people using Phy to spike sort the same dataset.
 
-        <div class="note" style="width:700px">Select your ID to view your choices (as label colors) compared to others:
-            <select id="userselect"><option value="">---</option></select>
-        </div>
-        <div id="legend" style="margin-bottom: 20px"></div>
-        <div id="plotarea" style="width:1150px;margin-left:10px">
-        <div id="plotcontainer" style="width:630px;height:560px;overflow:auto;float:left;border:2px solid lightgray">
-            <div id="plot" style="width:500px;height:4096px;margin-left:85px;margin-top:50px"></div>
-        </div>
-        <div id="imgtitle" style="font-size:30px;margin-left:850px;">&nbsp;</div>
-        <img id="phiimg" src="./phiviews/Selection_none.png" style="float:right; width:500px" />
-        </div>
+            <ul>
+                <li>miniDataset, from the Neuropixels 2021 course (33 participants):
+                    <ul>
+                        <li><a href="npix2021/index.html">Archived online viewer</a></li>
+                        <li><a href="datasets/miniDataset_results.zip">Participant sortings</a></li>
+                        <li><a href="http://data.cortexlab.net/singlePhase3/data/miniDataset.zip">Kilosort output which was sorted</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </p>
 
-        <div id="tablecontainer" style="margin: 30px">
-            <div id="splitscontainer" style="width:400px;margin: 30px; float: left">
-            </div>
-            <div id="mergescontainer" style="width:400px;margin: 30px; float: left">
-            </div>
-
-        </div>
-
-       <div class="row">
-          <div class="col m6 _alignRight">
-              <br>
-              Neuropixels course, 2021
-          </div>
-       </div>
-        </div>
     </body>
 </html>
 

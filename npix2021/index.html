@@ -8,8 +8,8 @@
         <script src="./jquery-3.6.0.min.js"></script>
         <script src="./jquery.flot.js"></script>
         <script src="./jquery.flot.axislabels.js"></script>
-        <script src="./groups-eMouse.json"></script>
-        <script src="./splitsmerges-eMouse.json"></script>
+        <script src="./groups-miniDataset.json"></script>
+        <script src="./splitsmerges-miniDataset.json"></script>
         <script>
         function setCookie(key, value, expiry) {
             var expires = new Date();
@@ -39,7 +39,7 @@
          flatten = (arr) => arr.reduce((a, b) => a.concat(Array.isArray(b) ? flatten(b) : b), [])
          average = list => list.reduce((prev, curr) => prev + curr) / list.length;
          function switchimage(i) {
-				     $("#phiimg").attr("src", "./phiviews/eMouse_"+String(cells[i]).padStart(3, '0')+".png");
+				     $("#phiimg").attr("src", "./phiviews/miniDataset_"+String(cells[i]).padStart(3, '0')+".png");
              $(".ylabeldiv").removeClass("selectedylabellink");
              $("#ylabel"+cells[i]).addClass("selectedylabellink");
              $("#imgtitle").text("Cluster "+cells[i]);
@@ -51,19 +51,19 @@
          function hideforgood() {
             $("#dontlookwarning").hide();
             $("#everythingelse").show();
-            setCookie("dontlook-eMouse", 1, 90);
+            setCookie("dontlook-miniDataset", 1, 90);
             location.reload(true);
             }
          function downloadfile() {
              biglink = "https://drive.google.com/file/d/1Lck13q2HU09s3tsRIrK9Z-UMp3daKwFV/view?usp=sharing";
              smalllink = "http://data.cortexlab.net/singlePhase3/data/miniDataset.zip";
-             dllink = ("eMouse" == "miniDataset") ? smalllink : biglink;
+             dllink = ("miniDataset" == "miniDataset") ? smalllink : biglink;
              window.location.href = dllink;
          }
 
          // On load
          $(function() {
-             if ("eMouse" == "miniDataset")
+             if ("miniDataset" == "miniDataset")
                  $("#minilink").addClass("active");
              else
                  $("#megalink").addClass("active");
@@ -81,7 +81,7 @@
                  $("#userselect").append($("<option>").val(i).html(users[i]));
              }
              $("#numpeople").text(users.length)
-             if (!getCookie("dontlook-eMouse")) {
+             if (!getCookie("dontlook-miniDataset")) {
                  $("#dontlookwarning").show();
                  $("#everythingelse").hide();
              }
@@ -233,10 +233,11 @@
     <body>
         <!-- Hey you, what are you doing viewing the HTML source?  You're such a nerd. -->
         <ul class="topnav">
-            <li><a class="brand">Spike sorting viewer</a></li>
+            <li><a class="brand">Spike sorting viewer (archived)</a></li>
+            <li><a id="homelink" href="/index.html">Home</a></li>
             <li><a id="minilink" href="index.html">miniDataset</a></li>
             <li><a id="megalink" href="emouse_dataset.html">eMouse dataset (optional)</a></li>
-            <li><a href="https://yalesurvey.ca1.qualtrics.com/jfe/form/SV_3zb1nyTGHVNgdYG">Submit</a></li>
+            <!--<li><a href="https://yalesurvey.ca1.qualtrics.com/jfe/form/SV_3zb1nyTGHVNgdYG">Submit</a></li>-->
             <li style="float:right"><a>Currently <span class="count _danger" id="numpeople">0</span> submissions <button class="_info _tiny" style="margin-left: 20px;margin-bottom:0px;padding:5px" id="refreshbutton">Refresh</button></a></li>
         </ul>
 
